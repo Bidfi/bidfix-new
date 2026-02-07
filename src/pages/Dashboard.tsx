@@ -11,7 +11,7 @@ export const Dashboard: React.FC = () => {
 
   const [formData, setFormData] = useState({
     serviceName: '',
-    category: 'Photography',
+    category: 'Photography & Media',
     description: '',
     availability: 'ASAP',
   });
@@ -19,13 +19,17 @@ export const Dashboard: React.FC = () => {
   const [successMessage, setSuccessMessage] = useState('');
 
   const categories = [
-    'Photography',
-    'Catering',
+    'Travel & Transport',
+    'Vehicle Parts & Accessories',
+    'Office Requirements',
+    'Customized Office Solutions',
+    'Home Furniture',
+    'Home Appliances',
+    'Photography & Media',
+    'Catering & Food Services',
     'Event Planning',
-    'Plumbing',
-    'Electrical',
-    'Cleaning',
-    'Landscaping',
+    'Electrical & Maintenance',
+    'Cleaning & Landscaping',
     'Other',
   ];
 
@@ -55,7 +59,7 @@ export const Dashboard: React.FC = () => {
         formData.description,
         formData.availability
       );
-      setFormData({ serviceName: '', category: 'Photography', description: '', availability: 'ASAP' });
+      setFormData({ serviceName: '', category: 'Photography & Media', description: '', availability: 'ASAP' });
       setSuccessMessage('Service posted successfully!');
       setTimeout(() => setSuccessMessage(''), 3000);
     } catch (err) {
