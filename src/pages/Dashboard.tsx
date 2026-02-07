@@ -1,11 +1,33 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LogOut } from 'lucide-react';
+import { useServices } from '../hooks/useServices';
+import { LogOut, Plus, Trash2, AlertCircle, CheckCircle, DollarSign, Tag, FileText } from 'lucide-react';
 
 export const Dashboard: React.FC = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const { services, loading, error, addService, deleteService } = useServices(user?.id);
+
+  const [formData, setFormData] = useState({
+    serviceName: '',
+    price: '',
+    category: 'Photography',
+    description: '',
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+
+  const categories = [
+    'Photography',
+    'Catering',
+    'Event Planning',
+    'Plumbing',
+    'Electrical',
+    'Cleaning',
+    'Landscaping',
+    'Other',
+  ];
 
   const handleSignOut = async () => {
     try {
@@ -16,11 +38,48 @@ export const Dashboard: React.FC = () => {
     }
   };
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setSuccessMessage('');
+
+    try {
+      await addService(
+        formData.serviceName,
+        parseFloat(formData.price),
+        formData.category,
+        formData.description
+      );
+      setFormData({ serviceName: '', price: '', category: 'Photography', description: '' });
+      setSuccessMessage('Service posted successfully!');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (err) {
+      console.error('Error adding service:', err);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDeleteService = async (serviceId: string) => {
+    if (window.confirm('Are you sure you want to delete this service?')) {
+      try {
+        await deleteService(serviceId);
+      } catch (err) {
+        console.error('Error deleting service:', err);
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-slate-100">
-      <nav className="bg-white shadow-sm border-b border-slate-200">
+      <nav className="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-blue-600">BidFix</h1>
+          <h1 className="text-2xl font-bold text-blue-600">BidFix Vendor</h1>
           <button
             onClick={handleSignOut}
             className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition duration-200"
@@ -31,16 +90,161 @@ export const Dashboard: React.FC = () => {
         </div>
       </nav>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="bg-white rounded-lg shadow-lg p-8">
-          <h2 className="text-3xl font-bold text-slate-900 mb-4">Welcome to Dashboard</h2>
-          <p className="text-slate-600 mb-6">
-            Logged in as: <span className="font-semibold text-slate-900">{user?.email}</span>
-          </p>
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-            <p className="text-slate-700">
-              You're successfully signed in! Start bidding on projects and manage your business.
-            </p>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-8">
+            <div className="bg-white rounded-lg shadow-lg p-8">
+              <div className="flex items-center gap-3 mb-6">
+                <Plus className="text-blue-600" size={28} />
+                <h2 className="text-2xl font-bold text-slate-900">Post New Service</h2>
+              </div>
+
+              {successMessage && (
+                <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex gap-3">
+                  <CheckCircle className="text-green-600 flex-shrink-0" size={20} />
+                  <p className="text-sm text-green-700">{successMessage}</p>
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <div>
+                  <label htmlFor="serviceName" className="block text-sm font-medium text-slate-700 mb-2">
+                    Service Name
+                  </label>
+                  <input
+                    id="serviceName"
+                    name="serviceName"
+                    type="text"
+                    value={formData.serviceName}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                    placeholder="e.g., Professional Portrait Photography"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="price" className="block text-sm font-medium text-slate-700 mb-2">
+                      Price
+                    </label>
+                    <div className="relative">
+                      <DollarSign className="absolute left-3 top-2.5 text-slate-400" size={20} />
+                      <input
+                        id="price"
+                        name="price"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={formData.price}
+                        onChange={handleInputChange}
+                        required
+                        className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                        placeholder="0.00"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="category" className="block text-sm font-medium text-slate-700 mb-2">
+                      Category
+                    </label>
+                    <div className="relative">
+                      <Tag className="absolute left-3 top-2.5 text-slate-400" size={20} />
+                      <select
+                        id="category"
+                        name="category"
+                        value={formData.category}
+                        onChange={handleInputChange}
+                        className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition bg-white appearance-none"
+                      >
+                        {categories.map(cat => (
+                          <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="description" className="block text-sm font-medium text-slate-700 mb-2">
+                    Description
+                  </label>
+                  <div className="relative">
+                    <FileText className="absolute left-3 top-2.5 text-slate-400" size={20} />
+                    <textarea
+                      id="description"
+                      name="description"
+                      value={formData.description}
+                      onChange={handleInputChange}
+                      required
+                      rows={4}
+                      className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition resize-none"
+                      placeholder="Describe your service in detail..."
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold py-2.5 px-4 rounded-lg transition duration-200 transform hover:scale-105 active:scale-95"
+                >
+                  {submitting ? 'Posting Service...' : 'Post Service'}
+                </button>
+              </form>
+            </div>
+
+            <div className="bg-white rounded-lg shadow-lg p-8">
+              <h2 className="text-2xl font-bold text-slate-900 mb-6">My Active Services</h2>
+
+              {loading ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+                </div>
+              ) : services.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-slate-600">No services posted yet. Create your first service above!</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {services.map(service => (
+                    <div key={service.id} className="border border-slate-200 rounded-lg p-5 hover:shadow-md transition">
+                      <div className="flex justify-between items-start gap-4">
+                        <div className="flex-1">
+                          <h3 className="text-lg font-semibold text-slate-900">{service.service_name}</h3>
+                          <p className="text-sm text-slate-600 mt-1">{service.category}</p>
+                          <p className="text-slate-700 mt-2">{service.description}</p>
+                          <div className="flex items-center gap-4 mt-3">
+                            <span className="text-lg font-bold text-blue-600">${service.price.toFixed(2)}</span>
+                            <span className="text-xs text-slate-500">
+                              {new Date(service.created_at).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleDeleteService(service.id)}
+                          className="p-2 hover:bg-red-50 rounded-lg transition text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 size={20} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-lg shadow-lg p-6 sticky top-24">
+              <h3 className="text-lg font-bold text-slate-900 mb-4">Live Bids</h3>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
+                <AlertCircle className="mx-auto text-blue-600 mb-3" size={32} />
+                <p className="text-slate-700 font-medium">No new bids yet</p>
+                <p className="text-sm text-slate-600 mt-2">Bids from customers will appear here</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
