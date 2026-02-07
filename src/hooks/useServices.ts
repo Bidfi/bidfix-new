@@ -4,9 +4,10 @@ import { supabase } from '../lib/supabase';
 export interface Service {
   id: string;
   service_name: string;
-  price: number;
   category: string;
   description: string;
+  availability: string;
+  pending_bids_count: number;
   created_at: string;
 }
 
@@ -40,7 +41,7 @@ export const useServices = (userId: string | undefined) => {
     fetchServices();
   }, [userId]);
 
-  const addService = async (serviceName: string, price: number, category: string, description: string) => {
+  const addService = async (serviceName: string, category: string, description: string, availability: string) => {
     if (!userId) throw new Error('User not authenticated');
 
     try {
@@ -50,9 +51,9 @@ export const useServices = (userId: string | undefined) => {
           {
             user_id: userId,
             service_name: serviceName,
-            price,
             category,
             description,
+            availability,
           },
         ])
         .select()

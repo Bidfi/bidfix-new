@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useServices } from '../hooks/useServices';
-import { LogOut, Plus, Trash2, AlertCircle, CheckCircle, DollarSign, Tag, FileText } from 'lucide-react';
+import { LogOut, Plus, Trash2, AlertCircle, CheckCircle, Tag, FileText, Clock } from 'lucide-react';
 
 export const Dashboard: React.FC = () => {
   const { user, signOut } = useAuth();
@@ -11,9 +11,9 @@ export const Dashboard: React.FC = () => {
 
   const [formData, setFormData] = useState({
     serviceName: '',
-    price: '',
     category: 'Photography',
     description: '',
+    availability: 'ASAP',
   });
   const [submitting, setSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
@@ -51,11 +51,11 @@ export const Dashboard: React.FC = () => {
     try {
       await addService(
         formData.serviceName,
-        parseFloat(formData.price),
         formData.category,
-        formData.description
+        formData.description,
+        formData.availability
       );
-      setFormData({ serviceName: '', price: '', category: 'Photography', description: '' });
+      setFormData({ serviceName: '', category: 'Photography', description: '', availability: 'ASAP' });
       setSuccessMessage('Service posted successfully!');
       setTimeout(() => setSuccessMessage(''), 3000);
     } catch (err) {
@@ -125,27 +125,6 @@ export const Dashboard: React.FC = () => {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="price" className="block text-sm font-medium text-slate-700 mb-2">
-                      Price
-                    </label>
-                    <div className="relative">
-                      <DollarSign className="absolute left-3 top-2.5 text-slate-400" size={20} />
-                      <input
-                        id="price"
-                        name="price"
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={formData.price}
-                        onChange={handleInputChange}
-                        required
-                        className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                        placeholder="0.00"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
                     <label htmlFor="category" className="block text-sm font-medium text-slate-700 mb-2">
                       Category
                     </label>
@@ -161,6 +140,29 @@ export const Dashboard: React.FC = () => {
                         {categories.map(cat => (
                           <option key={cat} value={cat}>{cat}</option>
                         ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="availability" className="block text-sm font-medium text-slate-700 mb-2">
+                      Availability
+                    </label>
+                    <div className="relative">
+                      <Clock className="absolute left-3 top-2.5 text-slate-400" size={20} />
+                      <select
+                        id="availability"
+                        name="availability"
+                        value={formData.availability}
+                        onChange={handleInputChange}
+                        className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition bg-white appearance-none"
+                      >
+                        <option value="ASAP">ASAP</option>
+                        <option value="This week">This week</option>
+                        <option value="Next week">Next week</option>
+                        <option value="2 weeks">2 weeks</option>
+                        <option value="1 month">1 month</option>
+                        <option value="Flexible">Flexible</option>
                       </select>
                     </div>
                   </div>
@@ -215,9 +217,16 @@ export const Dashboard: React.FC = () => {
                           <h3 className="text-lg font-semibold text-slate-900">{service.service_name}</h3>
                           <p className="text-sm text-slate-600 mt-1">{service.category}</p>
                           <p className="text-slate-700 mt-2">{service.description}</p>
-                          <div className="flex items-center gap-4 mt-3">
-                            <span className="text-lg font-bold text-blue-600">${service.price.toFixed(2)}</span>
-                            <span className="text-xs text-slate-500">
+                          <div className="flex flex-wrap items-center gap-4 mt-3">
+                            <div className="flex items-center gap-2">
+                              <Clock size={18} className="text-slate-500" />
+                              <span className="text-sm text-slate-700 font-medium">{service.availability}</span>
+                            </div>
+                            <div className="flex items-center gap-2 bg-blue-50 px-3 py-1 rounded-lg">
+                              <span className="text-sm font-bold text-blue-600">{service.pending_bids_count}</span>
+                              <span className="text-sm text-blue-700">{service.pending_bids_count === 1 ? 'Bid' : 'Bids'}</span>
+                            </div>
+                            <span className="text-xs text-slate-500 ml-auto">
                               {new Date(service.created_at).toLocaleDateString()}
                             </span>
                           </div>
